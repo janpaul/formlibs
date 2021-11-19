@@ -1,23 +1,41 @@
 import { Form, Formik, useFormikContext } from 'formik';
-import { PropsWithChildren, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { sleep } from '../../util';
-import { TextField } from './TextField';
+import { TextField } from './components/TextField';
 import * as yup from 'yup';
-import { SubForm } from './SubForm';
 import { TogglesForm } from './TogglesForm';
 import { Button } from '@material-ui/core';
+import { ExtraInfoForm } from './ExtraInfoForm';
 
 const topLevelValidation = yup.object().shape({
   firstName: yup.string().min(5).max(20).required(),
   lastName: yup.string().min(5).max(20).required(),
 });
 
+const extraFormValidation = yup.object().shape({
+  street: yup.string().max(20),
+  number: yup
+    .number()
+    .optional()
+    .when('extraInfo.street', {
+      is: (val: Record<string, any>) => !!val,
+      then: yup.number().required(),
+    }),
+});
+
+const initialValues = {
+  firstName: '',
+  lastName: '',
+  toggles: {},
+  extraInfo: {},
+};
+
 const FormikPage = () => {
   const renderCount = useRef<number>(0);
+  const [submitted, setSubmitted] = useState('');
   const handleOnSubmit = async (values: any) => {
-    console.log(values);
+    setSubmitted(JSON.stringify(values));
     await sleep(2500);
-    console.log('done');
     return true;
   };
 
@@ -27,12 +45,24 @@ const FormikPage = () => {
       <h1>Formik</h1>
       <h2>Current re-renders of page: {renderCount.current}</h2>
       <Formik
-        initialValues={{ firstName: '', lastName: '' }}
+        initialValues={initialValues}
         onSubmit={handleOnSubmit}
-        validationSchema={topLevelValidation}
+        validationSchema={topLevelValidation.concat(
+          yup.object().shape({
+            age: yup
+              .number()
+              .optional()
+              .when('toggles.age', {
+                is: (val: boolean) => val,
+                then: yup.number().required(),
+              }),
+            extraInfo: extraFormValidation,
+          })
+        )}
       >
         <FormikForm />
       </Formik>
+      <pre>{submitted}</pre>
     </div>
   );
 };
@@ -40,30 +70,45 @@ const FormikPage = () => {
 export default FormikPage;
 
 const FormikForm = () => {
-  const formik = useFormikContext();
+  const formik = useFormikContext<any>();
+  const timesCalled = useRef<number>(0);
+
+  const showAge = formik.values.toggles?.age;
+  const showExtraInfo = formik.values.toggles?.extraInfo;
+
+  timesCalled.current++;
   return (
-    <Form>
-      <TextField
-        required
-        variant="outlined"
-        name="firstName"
-        label="First name"
-      />
-      <TextField
-        required
-        variant="outlined"
-        name="lastName"
-        label="Last name"
-        validateOnlyBlur
-      />
-      <SubForm
-        Component={TogglesForm}
-        prefix={'toggles'}
-        initialValues={{ age: false }}
-      />
-      <Button disabled={formik.isSubmitting} variant="contained" type="submit">
-        {formik.isSubmitting ? 'Submitting...' : 'Submit'}
-      </Button>
-    </Form>
+    <>
+      <h2>
+        Form component times called: {timesCalled.current}. Doesn't mean
+        rerender per se.
+      </h2>
+      <Form>
+        <TextField
+          required
+          variant="outlined"
+          name="firstName"
+          label="First name"
+        />
+        <TextField
+          required
+          variant="outlined"
+          name="lastName"
+          label="Last name"
+        />
+        {showAge && (
+          <TextField required variant="outlined" name="age" label="Age" />
+        )}
+        <TogglesForm prefix="toggles" />
+        {showExtraInfo && <ExtraInfoForm prefix="extraInfo" />}
+        <Button
+          disabled={formik.isSubmitting}
+          variant="contained"
+          type="submit"
+        >
+          {formik.isSubmitting ? 'Submitting...' : 'Submit'}
+        </Button>
+      </Form>
+    </>
   );
 };
