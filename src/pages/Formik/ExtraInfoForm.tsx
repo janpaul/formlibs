@@ -1,7 +1,8 @@
-import { FieldAttributes, useFormikContext } from 'formik';
+import { useFormikContext } from 'formik';
 import { TextField } from './components/TextField';
+import get from 'lodash.get';
 
-export const ExtraInfoForm = ({ prefix }: FieldAttributes<any>) => {
+export const ExtraInfoForm = ({ prefix }: { prefix?: string }) => {
   const formik = useFormikContext<any>();
   return (
     <div>
@@ -15,7 +16,7 @@ export const ExtraInfoForm = ({ prefix }: FieldAttributes<any>) => {
         prefix={prefix}
         name="number"
         label="Number"
-        required={!!formik.values[prefix].street}
+        required={!!get(formik.values, prefix ? `${prefix}.street` : 'street')}
         variant="outlined"
       />
     </div>

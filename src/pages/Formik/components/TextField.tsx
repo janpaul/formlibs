@@ -18,6 +18,7 @@ export const TextField = ({
   console.log(fieldName);
   return (
     <MuiTextField
+      fullWidth
       id={fieldName}
       name={fieldName}
       value={value}

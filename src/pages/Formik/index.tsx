@@ -34,8 +34,9 @@ const FormikPage = () => {
   const renderCount = useRef<number>(0);
   const [submitted, setSubmitted] = useState('');
   const handleOnSubmit = async (values: any) => {
-    setSubmitted(JSON.stringify(values));
+    setSubmitted('Submitting...');
     await sleep(2500);
+    setSubmitted(JSON.stringify(values));
     return true;
   };
 
@@ -62,7 +63,12 @@ const FormikPage = () => {
       >
         <FormikForm />
       </Formik>
-      <pre>{submitted}</pre>
+      {!!submitted && (
+        <>
+          <h3>Submitted</h3>
+          <pre>{submitted}</pre>
+        </>
+      )}
     </div>
   );
 };
@@ -79,10 +85,7 @@ const FormikForm = () => {
   timesCalled.current++;
   return (
     <>
-      <h2>
-        Form component times called: {timesCalled.current}. Doesn't mean
-        rerender per se.
-      </h2>
+      <h2>Rerenders of form: {timesCalled.current} </h2>
       <Form>
         <TextField
           required
@@ -109,6 +112,8 @@ const FormikForm = () => {
           {formik.isSubmitting ? 'Submitting...' : 'Submit'}
         </Button>
       </Form>
+      <h3>Current values</h3>
+      <pre>{!!formik?.values && JSON.stringify(formik.values)}</pre>
     </>
   );
 };
