@@ -1,5 +1,4 @@
 import * as yup from 'yup';
-import { setIn } from 'final-form';
 import { Form, useFormState } from 'react-final-form';
 import { TextField } from 'mui-rff';
 import { useRef, useState } from 'react';
@@ -7,6 +6,7 @@ import { sleep } from '../../util';
 import { TogglesForm } from './TogglesForm';
 import { ExtraInfoForm } from './ExtraInfoForm';
 import { Button } from '@material-ui/core';
+import { validateFormValues } from './yupToRFF';
 
 const topLevelValidation = yup.object().shape({
   firstName: yup.string().min(5).max(20).required(),
@@ -23,21 +23,6 @@ const extraFormValidation = yup.object().shape({
       then: yup.number().required(),
     }),
 });
-
-const validateFormValues = (schema: any) => async (values: any) => {
-  if (typeof schema === 'function') {
-    schema = schema();
-  }
-  try {
-    await schema.validate(values, { abortEarly: false });
-  } catch (err: any) {
-    const errors = err.inner.reduce((formError: any, innerError: any) => {
-      return setIn(formError, innerError.path, innerError.message);
-    }, {});
-
-    return errors;
-  }
-};
 
 const validate = validateFormValues(
   topLevelValidation.concat(
